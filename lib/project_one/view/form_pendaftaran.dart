@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:ppkd_b4_sofyan/project_one/database/db_helper.dart';
 import 'package:ppkd_b4_sofyan/project_one/model/user_model.dart';
 
@@ -17,8 +18,10 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
   final _noHpController = TextEditingController();
   final _kotaController = TextEditingController();
 
-  final db = DBHelper();
+  final db = DbHelper();
   List<UserModel> _listUser = [];
+
+  UserModel? _selectedUser;
 
   @override
   void initState() {
@@ -29,35 +32,59 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
   Future<void> _loadUsers() async {
     final data = await db.getUsers();
     setState(() {
-      _listUser = data;
+      _listUser = data.cast<UserModel>();
     });
   }
 
   Future<void> _simpanData() async {
     if (_formKey.currentState!.validate()) {
-      final newUser = UserModel(
-        nama: _namaController.text,
-        email: _emailController.text,
-        noHp: _noHpController.text,
-        kota: _kotaController.text,
-      );
+      if (_selectedUser == null) {
+        // CREATE
+        final newUser = UserModel(
+          nama: _namaController.text,
+          email: _emailController.text,
+          noHp: _noHpController.text,
+          kota: _kotaController.text,
+        );
+        await db.insertUser(newUser);
+      } else {
+        // UPDATE
+        final updatedUser = UserModel(
+          id: _selectedUser!.id,
+          nama: _namaController.text,
+          email: _emailController.text,
+          noHp: _noHpController.text,
+          kota: _kotaController.text,
+        );
+        await db.updateUser(updatedUser);
+        _selectedUser = null;
+      }
 
-      await db.insertUser(newUser);
       _namaController.clear();
       _emailController.clear();
       _noHpController.clear();
       _kotaController.clear();
-      Future<void> loadUser() async {
-        final data = await db.getUsers();
-        print('Jumlah data : ${data.length}');
-        for (var u in data) {
-          print('user : ${u.nama}, ${u.email}, ${u.noHp}, ${u.kota}');
-        }
-        setState(() {
-          _listUser = data;
-        });
-      }
+
+      _loadUsers();
     }
+  }
+
+  void _editUser(UserModel user) {
+    setState(() {
+      _selectedUser = user;
+      _namaController.text = user.nama;
+      _emailController.text = user.email;
+      _noHpController.text = user.noHp;
+      _kotaController.text = user.kota;
+    });
+  }
+
+  void _hapusUser(int id) async {
+    await db.deleteUser(id);
+    _loadUsers();
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Data berhasil dihapus')));
   }
 
   @override
@@ -65,14 +92,11 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
     return Scaffold(
       backgroundColor: const Color(0xFF007C82),
       appBar: AppBar(
-        title: const Text("Form Pendaftaran"),
+        title: Text(
+          _selectedUser == null ? "Form Pendaftaran" : "Edit Data Peserta",
+        ),
         backgroundColor: const Color(0xFF007C82),
-        foregroundColor: const Color.fromARGB(255, 233, 239, 240),
         centerTitle: true,
-        actions: [
-          IconButton(onPressed: () {}, icon: Icon(Icons.app_registration)),
-        ],
-        actionsPadding: EdgeInsets.only(right: 10),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -80,14 +104,12 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Text(
-                "Daftar Peserta Satu Digital",
-                style: const TextStyle(
-                  fontSize: 20.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+            Text(
+              "Data Peserta Satu Digital",
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
             const SizedBox(height: 20),
@@ -119,9 +141,9 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      "Daftar",
-                      style: TextStyle(
+                    child: Text(
+                      _selectedUser == null ? "Simpan" : "Update",
+                      style: GoogleFonts.poppins(
                         color: Colors.black,
                         fontWeight: FontWeight.bold,
                       ),
@@ -135,10 +157,10 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
             Divider(color: Colors.white54),
             const SizedBox(height: 10),
 
-            const Text(
+            Text(
               "Peserta Terdaftar:",
-              style: TextStyle(
-                fontSize: 18.0,
+              style: GoogleFonts.poppins(
+                fontSize: 18,
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
@@ -146,9 +168,9 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
             const SizedBox(height: 10),
 
             _listUser.isEmpty
-                ? const Text(
+                ? Text(
                     "Belum ada peserta.",
-                    style: TextStyle(color: Colors.white),
+                    style: GoogleFonts.poppins(color: Colors.white),
                   )
                 : ListView.builder(
                     shrinkWrap: true,
@@ -169,6 +191,25 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
                           title: Text(user.nama),
                           subtitle: Text(
                             "${user.email}\n${user.noHp} - ${user.kota}",
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.blue,
+                                ),
+                                onPressed: () => _editUser(user),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () => _hapusUser(user.id!),
+                              ),
+                            ],
                           ),
                         ),
                       );
