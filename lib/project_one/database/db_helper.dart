@@ -7,7 +7,7 @@ class DbHelper {
 
   // Nama database dan versi
   static const _dbName = 'user_database.db';
-  static const _dbVersion = 2;
+  static const _dbVersion = 3;
 
   static const tableUser = 'users';
 
@@ -36,6 +36,7 @@ class DbHelper {
         nama TEXT,
         email TEXT,
         noHp TEXT,
+        password TEXT,
         kota TEXT
       )
     ''');
@@ -52,7 +53,7 @@ class DbHelper {
       print('Kolom gender berhasil ditambahkan ke tabel users');
     }
 
-    // Kalau nanti kamu naik ke versi 3, tinggal tambahkan:
+    // Kalau nanti naik ke versi 3, tinggal tambahkan:
     // if (oldVersion < 3) { ... }
   }
 
@@ -87,5 +88,21 @@ class DbHelper {
   Future<int> deleteUser(int id) async {
     final db = await database;
     return await db.delete(tableUser, where: 'id = ?', whereArgs: [id]);
+  }
+
+  // Login verif
+  Future<UserModel?> loginUser(String email, String password) async {
+    final db = await database;
+    final List<Map<String, dynamic>> result = await db.query(
+      tableUser,
+      where: 'email = ? AND password = ?',
+      whereArgs: [email, password],
+    );
+
+    if (result.isNotEmpty) {
+      return UserModel.fromMap(result.first); //User ditemukan
+    } else {
+      return null; //Tidak ditemukan
+    }
   }
 }

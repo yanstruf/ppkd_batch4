@@ -16,6 +16,8 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
   final _namaController = TextEditingController();
   final _emailController = TextEditingController();
   final _noHpController = TextEditingController();
+  final _passwordController = TextEditingController();
+
   final _kotaController = TextEditingController();
 
   final db = DbHelper();
@@ -40,10 +42,12 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
     if (_formKey.currentState!.validate()) {
       if (_selectedUser == null) {
         // CREATE
+
         final newUser = UserModel(
           nama: _namaController.text,
           email: _emailController.text,
           noHp: _noHpController.text,
+          passwword: _passwordController.text,
           kota: _kotaController.text,
         );
         await db.insertUser(newUser);
@@ -54,6 +58,7 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
           nama: _namaController.text,
           email: _emailController.text,
           noHp: _noHpController.text,
+          passwword: _passwordController.text,
           kota: _kotaController.text,
         );
         await db.updateUser(updatedUser);
@@ -63,6 +68,7 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
       _namaController.clear();
       _emailController.clear();
       _noHpController.clear();
+      _passwordController.clear();
       _kotaController.clear();
 
       _loadUsers();
@@ -75,6 +81,7 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
       _namaController.text = user.nama;
       _emailController.text = user.email;
       _noHpController.text = user.noHp;
+      _passwordController.text = user.passwword;
       _kotaController.text = user.kota;
     });
   }
@@ -94,6 +101,7 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
       appBar: AppBar(
         title: Text(
           _selectedUser == null ? "Form Pendaftaran" : "Edit Data Peserta",
+          style: TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF007C82),
         centerTitle: true,
@@ -129,6 +137,7 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
                     },
                   ),
                   _buildInput("Nomor HP", _noHpController),
+                  _buildInput('Password', _passwordController),
                   _buildInput("Asal Kota", _kotaController),
                   const SizedBox(height: 20),
 
@@ -142,7 +151,7 @@ class _FormPendaftaranState extends State<FormPendaftaran> {
                       ),
                     ),
                     child: Text(
-                      _selectedUser == null ? "Simpan" : "Update",
+                      _selectedUser == null ? "Daftar" : "Update",
                       style: GoogleFonts.poppins(
                         color: Colors.black,
                         fontWeight: FontWeight.bold,

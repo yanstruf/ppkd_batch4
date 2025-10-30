@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ppkd_b4_sofyan/login/home_screen.dart';
+import 'package:ppkd_b4_sofyan/project_one/admin_dashboard.dart';
+import 'package:ppkd_b4_sofyan/project_one/database/db_helper.dart';
 import 'package:ppkd_b4_sofyan/project_one/view/form_pendaftaran.dart';
 // import 'package:google_fonts/google_fonts.dart';
 
@@ -11,13 +13,24 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
   @override
+  void dispose() {
+    // ✅ Jangan lupa dispose untuk mencegah memory leak
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF007C82), // warna teal seperti gambar
+      backgroundColor: const Color(0xFF007C82),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -171,11 +184,44 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // Tombol Masuk
               ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomeScreen()),
-                  );
+                onPressed: () async {
+                  final email = _emailController.text;
+                  final password = _passwordController.text;
+
+                  if (email.isEmpty || password.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Email dan Password wajib diisi'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  final dbHelper = DbHelper();
+                  final user = await dbHelper.loginUser(email, password);
+
+                  if (user != null) {
+                    // cek role user
+                    if (user.role == 'admin') {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AdminDashboard(),
+                        ),
+                      );
+                    } else {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const HomeScreen()),
+                      );
+                    }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Email atau Password salah!'),
+                      ),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
@@ -184,8 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-
-                child: Text(
+                child: const Text(
                   "Masuk",
                   style: TextStyle(
                     color: Colors.black87,
@@ -194,6 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 12),
 
               // Belum punya akun

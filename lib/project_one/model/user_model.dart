@@ -3,6 +3,7 @@ class UserModel {
   final String nama;
   final String email;
   final String noHp;
+  final String passwword;
   final String kota;
 
   UserModel({
@@ -10,6 +11,7 @@ class UserModel {
     required this.nama,
     required this.email,
     required this.noHp,
+    required this.passwword,
     required this.kota,
   });
 
@@ -20,9 +22,12 @@ class UserModel {
       nama: map['nama'],
       email: map['email'],
       noHp: map['noHp'],
+      passwword: map['password'],
       kota: map['kota'],
     );
   }
+
+  get role => null;
 
   // Konversi dari Object ke Map
   Map<String, dynamic> toMap() {
